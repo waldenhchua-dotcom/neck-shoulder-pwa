@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f7f6f3" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="肩颈舒展" />
+    <title>肩颈舒展</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./assets/icon.svg" />
+    <link rel="stylesheet" href="./styles.css?v=pages-v1" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="home-view" class="view view-active" aria-labelledby="app-title">
+        <header class="home-header">
+          <div class="brand-row">
+            <span class="brand-mark" aria-hidden="true"></span>
+            <span class="brand-kicker">手机本地训练</span>
+          </div>
+          <h1 id="app-title">肩颈舒展</h1>
+          <p class="lead">动作、计时、换边和打卡都在这里完成。个人记录只保存在这台设备。</p>
+        </header>
+
+        <section class="stats-grid" aria-label="训练记录">
+          <div class="stat-panel">
+            <span id="today-count" class="stat-value">0</span>
+            <span class="stat-label">今日完成</span>
+          </div>
+          <div class="stat-panel">
+            <span id="total-count" class="stat-value">0</span>
+            <span class="stat-label">本机记录</span>
+          </div>
+        </section>
+
+        <section class="program-list" aria-label="训练选择">
+          <div class="section-title-row">
+            <span class="section-dot"></span>
+            <h2>选择训练</h2>
+          </div>
+          <div id="program-cards" class="program-cards"></div>
+        </section>
+
+        <section class="safety-panel" aria-label="安全提醒">
+          <div class="safety-heading">
+            <span class="warning-icon" aria-hidden="true"></span>
+            <h2>开始前确认</h2>
+          </div>
+          <p>动作小、慢、稳。出现头晕、手麻、刺痛或疼痛加重时立即停止。不要快速绕脖子、甩头、暴力压肩或让别人帮你掰脖子。</p>
+        </section>
+      </section>
+
+      <section id="session-view" class="view" aria-live="polite">
+        <header class="session-bar">
+          <button id="back-home" class="icon-button" type="button" aria-label="返回首页">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M15.5 4.5 8 12l7.5 7.5" />
+            </svg>
+          </button>
+          <div class="progress-track" aria-label="训练进度">
+            <div id="progress-fill" class="progress-fill"></div>
+          </div>
+          <span id="progress-count" class="progress-count">0/0</span>
+        </header>
+
+        <section class="exercise-hero">
+          <div class="exercise-copy">
+            <p id="segment-meta" class="segment-meta">双侧</p>
+            <div id="side-mode" class="side-mode" aria-label="左右模式"></div>
+            <h2 id="exercise-name">动作名称</h2>
+            <p id="exercise-purpose" class="exercise-purpose">动作目的</p>
+          </div>
+          <div class="pose-visual" aria-hidden="true">
+            <img id="pose-image" class="pose-image" src="./assets/exercises/chin-tuck.png" alt="" />
+          </div>
+        </section>
+
+        <section class="timer-panel" aria-label="当前计时">
+          <span id="timer-label" class="timer-label">倒计时</span>
+          <span id="timer-value" class="timer-value">0:30</span>
+          <span id="timer-subtitle" class="timer-subtitle"></span>
+        </section>
+
+        <section class="detail-sheet">
+          <p id="exercise-cue" class="cue-text"></p>
+          <p id="side-note" class="side-note" hidden></p>
+
+          <div class="detail-block">
+            <h3>做法</h3>
+            <ol id="step-list"></ol>
+          </div>
+
+          <div class="detail-grid">
+            <div class="detail-block">
+              <h3>感觉</h3>
+              <p id="exercise-focus"></p>
+            </div>
+            <div class="detail-block">
+              <h3>拉伸位置</h3>
+              <p id="exercise-target"></p>
+            </div>
+          </div>
+
+          <div class="caution-strip">
+            <span class="warning-icon" aria-hidden="true"></span>
+            <p id="exercise-caution"></p>
+          </div>
+        </section>
+
+        <nav class="control-bar" aria-label="训练控制">
+          <button id="previous-action" class="secondary-button compact-button" type="button">上一个</button>
+          <button id="primary-action" class="primary-button" type="button">暂停</button>
+          <button id="skip-action" class="secondary-button compact-button" type="button">跳过</button>
+        </nav>
+      </section>
+
+      <section id="done-view" class="view done-view" aria-labelledby="done-title">
+        <div class="done-mark" aria-hidden="true"></div>
+        <h2 id="done-title">今天这轮完成了</h2>
+        <p>脖子应该更轻一点，肩膀更容易下降，呼吸也更顺。若出现头晕、手麻或疼痛加重，下次减少幅度或先暂停。</p>
+        <button id="restart-program" class="primary-button wide-button" type="button">再来一轮</button>
+        <button id="done-home" class="secondary-button wide-button" type="button">回首页</button>
+      </section>
+    </main>
+
+    <script src="./app.js?v=pages-v1" type="module"></script>
+  </body>
+</html>
