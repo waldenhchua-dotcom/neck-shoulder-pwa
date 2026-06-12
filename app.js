@@ -284,6 +284,7 @@ const state = {
   timerId: 0,
   wakeLock: null,
   wakeLockRequest: null,
+  audioContext: null,
   completions: loadCompletions()
 };
 
@@ -672,6 +673,80 @@ function vibrate(pattern = 35) {
   }
 }
 
+function isActionSegment(segment) {
+  return Boolean(segment && segment.exercise.kind !== "rest");
+}
+
+function ensureAudioContext() {
+  if (state.audioContext) {
+    return state.audioContext;
+  }
+
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) {
+    return null;
+  }
+
+  state.audioContext = new AudioContextClass();
+  return state.audioContext;
+}
+
+function unlockAudioFeedback() {
+  const audioContext = ensureAudioContext();
+  if (!audioContext || audioContext.state !== "suspended") {
+    return;
+  }
+
+  void audioContext.resume().catch(() => undefined);
+}
+
+function scheduleSoftNote(audioContext, { frequency, startAt, duration, gain = 0.032, type = "sine" }) {
+  const oscillator = audioContext.createOscillator();
+  const noteGain = audioContext.createGain();
+  const filter = audioContext.createBiquadFilter();
+  const endAt = startAt + duration;
+
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, startAt);
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(2200, startAt);
+  noteGain.gain.setValueAtTime(0.0001, startAt);
+  noteGain.gain.exponentialRampToValueAtTime(gain, startAt + 0.018);
+  noteGain.gain.exponentialRampToValueAtTime(0.0001, endAt);
+
+  oscillator.connect(filter);
+  filter.connect(noteGain);
+  noteGain.connect(audioContext.destination);
+  oscillator.start(startAt);
+  oscillator.stop(endAt + 0.03);
+}
+
+function playExerciseCue(kind) {
+  const audioContext = ensureAudioContext();
+  if (!audioContext || document.visibilityState !== "visible") {
+    return;
+  }
+
+  if (audioContext.state === "suspended") {
+    void audioContext.resume().then(() => playExerciseCue(kind)).catch(() => undefined);
+    return;
+  }
+
+  const now = audioContext.currentTime + 0.012;
+  const notes =
+    kind === "start"
+      ? [
+          { frequency: 659.25, startAt: now, duration: 0.18, gain: 0.028 },
+          { frequency: 880, startAt: now + 0.055, duration: 0.2, gain: 0.024, type: "triangle" }
+        ]
+      : [
+          { frequency: 523.25, startAt: now, duration: 0.19, gain: 0.03 },
+          { frequency: 392, startAt: now + 0.06, duration: 0.24, gain: 0.026, type: "triangle" }
+        ];
+
+  notes.forEach((note) => scheduleSoftNote(audioContext, note));
+}
+
 function renderHome() {
   els.programCards.innerHTML = "";
   programs.forEach((program) => {
@@ -770,6 +845,7 @@ function syncScreenWakeLock() {
 }
 
 function startProgram(program) {
+  unlockAudioFeedback();
   state.selectedProgram = program;
   state.segments = buildSession(program);
   state.segmentIndex = 0;
@@ -813,6 +889,10 @@ function setupSegment() {
   }
 
   renderSession();
+
+  if (state.isRunning && isActionSegment(segment)) {
+    playExerciseCue("start");
+  }
 }
 
 function currentSegment() {
@@ -1069,6 +1149,8 @@ function togglePrimaryAction() {
     return;
   }
 
+  unlockAudioFeedback();
+
   if (segment.exercise.kind === "reps") {
     state.repCount += 1;
     if (state.repCount >= (segment.reps ?? 1)) {
@@ -1087,6 +1169,11 @@ function togglePrimaryAction() {
 }
 
 function moveNext() {
+  const segment = currentSegment();
+  if (isActionSegment(segment)) {
+    playExerciseCue("end");
+  }
+
   vibrate([30, 30, 30]);
   if (state.segmentIndex + 1 >= state.segments.length) {
     finishSession();

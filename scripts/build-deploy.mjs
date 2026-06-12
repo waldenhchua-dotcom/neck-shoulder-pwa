@@ -3,7 +3,7 @@ import { join, resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
 const dist = join(root, "dist");
-const deployVersion = "pages-v4";
+const deployVersion = "pages-v5";
 const imageIds = [
   "chin-tuck",
   "upper-trap-stretch",
