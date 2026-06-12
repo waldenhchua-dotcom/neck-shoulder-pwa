@@ -284,6 +284,8 @@ const state = {
   holdPhase: "hold",
   repRelaxLeft: 0,
   timerId: 0,
+  wakeLock: null,
+  wakeLockRequest: null,
   completions: loadCompletions()
 };
 
@@ -714,6 +716,61 @@ function showView(viewName) {
   }
 }
 
+async function requestScreenWakeLock() {
+  if (!("wakeLock" in navigator) || state.wakeLock || state.wakeLockRequest || state.screen !== "session" || !state.isRunning) {
+    return;
+  }
+
+  const request = navigator.wakeLock.request("screen");
+  state.wakeLockRequest = request;
+
+  try {
+    const wakeLock = await request;
+
+    if (state.screen !== "session" || !state.isRunning || document.visibilityState !== "visible") {
+      await wakeLock.release();
+      return;
+    }
+
+    state.wakeLock = wakeLock;
+    wakeLock.addEventListener("release", () => {
+      if (state.wakeLock === wakeLock) {
+        state.wakeLock = null;
+      }
+    });
+  } catch {
+    state.wakeLock = null;
+  } finally {
+    if (state.wakeLockRequest === request) {
+      state.wakeLockRequest = null;
+    }
+  }
+}
+
+async function releaseScreenWakeLock() {
+  const wakeLock = state.wakeLock;
+  state.wakeLock = null;
+
+  if (!wakeLock) {
+    return;
+  }
+
+  try {
+    await wakeLock.release();
+  } catch {
+    // The browser may already release the lock when the page is hidden.
+  }
+}
+
+function syncScreenWakeLock() {
+  if (state.screen === "session" && state.isRunning && document.visibilityState === "visible") {
+    void requestScreenWakeLock();
+    return;
+  }
+
+  void releaseScreenWakeLock();
+}
+
 function startProgram(program) {
   state.selectedProgram = program;
   state.segments = buildSession(program);
@@ -723,6 +780,7 @@ function startProgram(program) {
   setupSegment();
   showView("session");
   startTicker();
+  syncScreenWakeLock();
   vibrate(25);
 }
 
@@ -1025,6 +1083,7 @@ function togglePrimaryAction() {
   }
 
   state.isRunning = !state.isRunning;
+  syncScreenWakeLock();
   vibrate(20);
   renderSession();
 }
@@ -1065,6 +1124,7 @@ function movePrevious() {
 function finishSession() {
   stopTicker();
   state.isRunning = false;
+  void releaseScreenWakeLock();
   const actionSegments = state.segments.filter((segment) => segment.exercise.kind !== "rest");
   const restSegments = state.segments.filter((segment) => segment.exercise.kind === "rest");
   const sideRestSegments = restSegments.filter((segment) => segment.restType === "side");
@@ -1107,6 +1167,7 @@ function finishSession() {
 function resetHome() {
   stopTicker();
   state.isRunning = false;
+  void releaseScreenWakeLock();
   showView("home");
   renderHome();
 }
@@ -1123,6 +1184,7 @@ els.primaryAction.addEventListener("click", togglePrimaryAction);
 els.previousAction.addEventListener("click", movePrevious);
 els.skipAction.addEventListener("click", moveNext);
 els.restartProgram.addEventListener("click", () => startProgram(state.selectedProgram));
+document.addEventListener("visibilitychange", syncScreenWakeLock);
 
 renderHome();
 registerServiceWorker();

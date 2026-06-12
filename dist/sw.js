@@ -1,9 +1,9 @@
-const CACHE_NAME = "neck-shoulder-pwa-pages-v3";
+const CACHE_NAME = "neck-shoulder-pwa-pages-v4";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=pages-v3",
-  "./app.js?v=pages-v3",
+  "./styles.css?v=pages-v4",
+  "./app.js?v=pages-v4",
   "./manifest.webmanifest",
   "./assets/icon.svg"
 ];
