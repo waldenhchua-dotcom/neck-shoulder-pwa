@@ -241,6 +241,10 @@ const els = {
   programCards: document.querySelector("#program-cards"),
   todayCount: document.querySelector("#today-count"),
   totalCount: document.querySelector("#total-count"),
+  recordLast: document.querySelector("#record-last"),
+  weekCount: document.querySelector("#week-count"),
+  recordList: document.querySelector("#record-list"),
+  recordEmpty: document.querySelector("#record-empty"),
   backHome: document.querySelector("#back-home"),
   progressFill: document.querySelector("#progress-fill"),
   progressCount: document.querySelector("#progress-count"),
@@ -553,6 +557,113 @@ function saveCompletions() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.completions.slice(0, 50)));
 }
 
+function sortedCompletions() {
+  return [...state.completions]
+    .filter((item) => !Number.isNaN(new Date(item.completedAt).getTime()))
+    .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
+}
+
+function formatRecordDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "时间未知";
+  }
+
+  const clock = date.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+  const day = new Date(date);
+  day.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (day.getTime() === today.getTime()) {
+    return `今天 ${clock}`;
+  }
+
+  if (day.getTime() === yesterday.getTime()) {
+    return `昨天 ${clock}`;
+  }
+
+  return `${date.toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" })} ${clock}`;
+}
+
+function formatRecordDuration(seconds) {
+  const value = Math.round(Number(seconds));
+  if (!Number.isFinite(value) || value <= 0) {
+    return "未知";
+  }
+
+  if (value < 60) {
+    return `${value}秒`;
+  }
+
+  return formatSeconds(value);
+}
+
+function createRecordMetric(text) {
+  const item = document.createElement("span");
+  item.className = "record-metric";
+  item.textContent = text;
+  return item;
+}
+
+function renderRecordModule() {
+  if (!els.recordLast || !els.weekCount || !els.recordList || !els.recordEmpty) {
+    return;
+  }
+
+  const completions = sortedCompletions();
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const weekCount = completions.filter((item) => new Date(item.completedAt).getTime() >= sevenDaysAgo).length;
+
+  els.recordLast.textContent = completions[0] ? formatRecordDate(completions[0].completedAt) : "暂无";
+  els.weekCount.textContent = String(weekCount);
+  els.recordList.innerHTML = "";
+  els.recordList.hidden = completions.length === 0;
+  els.recordEmpty.hidden = completions.length > 0;
+
+  completions.slice(0, 5).forEach((completion) => {
+    const record = document.createElement("article");
+    record.className = "record-item";
+
+    const header = document.createElement("div");
+    header.className = "record-item-header";
+
+    const title = document.createElement("span");
+    title.className = "record-item-title";
+    title.textContent = completion.programTitle ?? completion.recordTitle ?? "训练记录";
+
+    const time = document.createElement("time");
+    time.className = "record-item-time";
+    time.dateTime = completion.completedAt;
+    time.textContent = formatRecordDate(completion.completedAt);
+
+    header.append(title, time);
+
+    const meta = document.createElement("div");
+    meta.className = "record-item-meta";
+    meta.append(createRecordMetric(`用时 ${formatRecordDuration(completion.actualSeconds)}`));
+
+    if (completion.plannedDuration) {
+      meta.append(createRecordMetric(`计划 ${completion.plannedDuration}`));
+    }
+
+    if (Number.isFinite(Number(completion.actionSegmentCount))) {
+      meta.append(createRecordMetric(`${completion.actionSegmentCount} 段动作`));
+    }
+
+    if (Number.isFinite(Number(completion.restSeconds))) {
+      meta.append(createRecordMetric(`休息 ${formatRecordDuration(completion.restSeconds)}`));
+    }
+
+    record.append(header, meta);
+    els.recordList.append(record);
+  });
+}
+
 function vibrate(pattern = 35) {
   if ("vibrate" in navigator) {
     navigator.vibrate(pattern);
@@ -577,6 +688,7 @@ function renderHome() {
     els.programCards.append(button);
   });
   renderStats();
+  renderRecordModule();
 }
 
 function renderStats() {

@@ -133,6 +133,7 @@ h1 {
 
 .stat-panel,
 .program-card,
+.record-panel,
 .safety-panel,
 .detail-sheet {
   background: var(--surface);
@@ -231,6 +232,96 @@ h1 {
   margin-top: 12px;
   color: var(--muted);
   font-size: 13px;
+}
+
+.record-panel {
+  margin-top: 18px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.record-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 2px 0 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.record-summary-value {
+  display: block;
+  min-height: 23px;
+  color: var(--ink);
+  font-size: 19px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.record-summary-label {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.record-list {
+  display: grid;
+  gap: 0;
+}
+
+.record-item {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.record-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.record-item-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.record-item-title {
+  min-width: 0;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 900;
+}
+
+.record-item-time {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.record-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.record-metric {
+  color: var(--muted);
+  background: #f4f3ef;
+  border-radius: 6px;
+  padding: 5px 7px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.record-empty {
+  margin-top: 13px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .safety-panel {
