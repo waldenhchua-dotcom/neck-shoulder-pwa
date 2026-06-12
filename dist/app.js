@@ -2,6 +2,7 @@ const POSE_IMAGE_DATA = Object.freeze({"chin-tuck":"data:image/png;base64,iVBORw
 
 const STORAGE_KEY = "neckShoulderPwa.completions";
 const SIDE_REST_SECONDS = 5;
+const INITIAL_PREP_SECONDS = 15;
 const TRANSITION_REST_SECONDS = 15;
 const REP_RELAX_SECONDS = 5;
 
@@ -315,7 +316,7 @@ function buildSession(program) {
     return segments;
   });
 
-  return exerciseSegments.flatMap((segment, index) => {
+  const sessionSegments = exerciseSegments.flatMap((segment, index) => {
     const nextSegment = exerciseSegments[index + 1];
 
     if (!nextSegment) {
@@ -339,6 +340,26 @@ function buildSession(program) {
       }
     ];
   });
+
+  if (exerciseSegments.length === 0) {
+    return [];
+  }
+
+  const firstSegment = exerciseSegments[0];
+  return [
+    {
+      id: "initial-prep",
+      exercise: restExercise,
+      side: "center",
+      setIndex: 1,
+      totalSets: 1,
+      restType: "initial",
+      seconds: INITIAL_PREP_SECONDS,
+      nextSide: firstSegment.side,
+      nextExerciseName: firstSegment.exercise.name
+    },
+    ...sessionSegments
+  ];
 }
 
 function estimateProgramSeconds(program) {
@@ -387,6 +408,10 @@ function isTwoSideAction(segment) {
 }
 
 function restKindLabel(segment) {
+  if (segment.restType === "initial") {
+    return "开始准备";
+  }
+
   if (segment.restType === "transition") {
     return "换动作准备";
   }
@@ -399,6 +424,10 @@ function restKindLabel(segment) {
 }
 
 function restDisplayName(segment) {
+  if (segment.restType === "initial") {
+    return `准备 ${segment.seconds ?? INITIAL_PREP_SECONDS} 秒`;
+  }
+
   if (segment.restType === "transition") {
     return `准备 ${segment.seconds ?? TRANSITION_REST_SECONDS} 秒`;
   }
@@ -411,6 +440,10 @@ function restDisplayName(segment) {
 }
 
 function restPurpose(segment) {
+  if (segment.restType === "initial") {
+    return "先调整姿势和呼吸，准备开始第一个动作";
+  }
+
   if (segment.restType === "transition") {
     return "调整位置，准备下一个动作";
   }
@@ -423,6 +456,10 @@ function restPurpose(segment) {
 }
 
 function restSubtitle(segment) {
+  if (segment.restType === "initial") {
+    return segment.nextExerciseName ? `第一个动作：${segment.nextExerciseName}` : "准备开始";
+  }
+
   if (segment.restType === "side") {
     return `下一侧：${sideLabels[segment.nextSide] ?? "另一侧"} · 仍是${segment.nextExerciseName}`;
   }
@@ -653,7 +690,7 @@ function renderSession() {
   }
 
   if (exercise.kind === "rest") {
-    els.timerLabel.textContent = segment.restType === "transition" ? "准备" : "放松";
+    els.timerLabel.textContent = segment.restType === "side" ? "放松" : "准备";
     els.timerValue.textContent = `${state.secondsLeft}s`;
     els.timerSubtitle.textContent = restSubtitle(segment);
     els.primaryAction.textContent = state.isRunning ? "暂停" : "继续";
